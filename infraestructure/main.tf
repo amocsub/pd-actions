@@ -45,18 +45,18 @@ resource "google_iam_workload_identity_pool" "pd-actions-wip" {
 }
 
 # Kubernetes Cluster
-resource "google_iam_workload_identity_pool_provider" "github-enterprise" {
+resource "google_iam_workload_identity_pool_provider" "github-wip-provider" {
   workload_identity_pool_id          = google_iam_workload_identity_pool.pd-actions-wip.workload_identity_pool_id
-  workload_identity_pool_provider_id = "github-enterprise"
-  display_name                       = "Github Enterprise"
-  description                        = "Github Enterprise OIDC provider"
+  workload_identity_pool_provider_id = "github"
+  display_name                       = "Github"
+  description                        = "Github OIDC provider"
   disabled                           = false
   attribute_mapping = {
     "attribute.repository_owner" = "assertion.repository_owner",
     "google.subject"             = "assertion.sub"
   }
   oidc {
-    issuer_uri = var.github-enterprise-host != "" ? "https://${var.github-enterprise-host}/_services/token" : "https://token.actions.githubusercontent.com"
+    issuer_uri = "https://token.actions.githubusercontent.com"
   }
   depends_on = [google_iam_workload_identity_pool.pd-actions-wip]
 }
