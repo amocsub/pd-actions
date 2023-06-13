@@ -9,5 +9,6 @@ terraform {
 provider "helm" {
   kubernetes {
     config_path = "~/.kube/config"
+    config_context = "gke_pd-actions_europe-west1_autopilot-primary"
   }
 }
