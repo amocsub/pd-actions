@@ -72,12 +72,5 @@ resource "google_container_cluster" "autopilot-primary" {
     cluster_secondary_range_name  = "k8s-pods"
     services_secondary_range_name = "k8s-svc"
   }
-  private_cluster_config {
-    enable_private_nodes    = true
-    enable_private_endpoint = false
-    master_global_access_config {
-      enabled = true
-    }
-  }
-  depends_on = [ google_compute_network.pd-actions-vpc-network, google_compute_subnetwork.pd-actions-vpc-subnet ]
+  depends_on = [google_compute_network.pd-actions-vpc-network, google_compute_subnetwork.pd-actions-vpc-subnet]
 }
