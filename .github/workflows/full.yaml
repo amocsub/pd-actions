@@ -43,8 +43,8 @@ jobs:
       if: steps.nuclei.outcome == 'success'
     - run: |
         git add output/
-        git config --local user.email "matias.busco@king.com"
-        git config --global user.name "matias.busco"
+        git config --local user.email "${{ secrets.GLOBAL_GITHUB_EMAIL }}"
+        git config --global user.name "${{ secrets.GLOBAL_GITHUB_USER }}"
         git commit -m "${{ github.workflow }} - Run ${{ github.run_id }} - Add ${{ github.event.inputs.input_domain }}" -a --allow-empty
         git push -f
       if: steps.add-subfinder.outcome == 'success' || steps.add-dnsx.outcome == 'success' || steps.add-naabu.outcome == 'success' || steps.add-httpx.outcome == 'success' || steps.add-nuclei.outcome == 'success'

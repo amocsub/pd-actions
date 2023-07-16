@@ -61,8 +61,8 @@ jobs:
         gcloud storage cp "gs://pd-actions-bucket/runs/${{ github.run_id }}/dnsx/*" workspace/
         cat workspace/dnsx-output-* | anew ${{ github.event.inputs.output_filename }} > workspace/new-active-subdomains.txt
         git add ${{ github.event.inputs.output_filename }}
-        git config --local user.email "matias.busco@king.com"
-        git config --global user.name "matias.busco"
+        git config --local user.email "${{ secrets.GLOBAL_GITHUB_EMAIL }}"
+        git config --global user.name "${{ secrets.GLOBAL_GITHUB_USER }}"
         git commit -m "${{ github.workflow }} - Run ${{ github.run_id }}" -a --allow-empty
         git push -f
 
