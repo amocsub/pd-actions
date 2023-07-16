@@ -16,6 +16,6 @@ jobs:
     - uses: actions/checkout@v3
     - run: |
         docker login -u  ${{ secrets.DOCKERHUB_USER }} -p ${{ secrets.DOCKERHUB_TOKEN }}
-        cd actions-runner-controller/runner
+        cd runner
         make build
         make push
