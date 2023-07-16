@@ -4,10 +4,14 @@ name: "Build and Push"
 on:
   workflow_dispatch:
 
+  push:
+    paths:
+      - 'runner/**'
+
 jobs:
 
   build-and-push:
-    runs-on: builder
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - run: |
