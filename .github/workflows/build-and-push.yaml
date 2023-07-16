@@ -1,0 +1,17 @@
+
+name: "Build and Push"
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  build-and-push:
+    runs-on: builder
+    steps:
+    - uses: actions/checkout@v3
+    - run: |
+        docker login -u  ${{ secrets.DOCKERHUB_USER }} -p ${{ secrets.DOCKERHUB_TOKEN }}
+        cd actions-runner-controller/runner
+        make build
+        make push

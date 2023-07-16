@@ -1,0 +1,20 @@
+DOCKER ?= docker
+DOCKER_USER ?= buscoma
+DEFAULT_RUNNER_NAME ?= ${DOCKER_USER}/actions-runner
+OS_IMAGE ?= ubuntu-20.04
+
+RUNNER_VERSION ?= 2.305.0
+RUNNER_CONTAINER_HOOKS_VERSION ?= 0.3.2
+DOCKER_VERSION ?= 20.10.23
+
+build:
+	${DOCKER} build \
+	  --build-arg RUNNER_VERSION=${RUNNER_VERSION} \
+	  --build-arg RUNNER_CONTAINER_HOOKS_VERSION=${RUNNER_CONTAINER_HOOKS_VERSION} \
+	  --build-arg DOCKER_VERSION=${DOCKER_VERSION} \
+	  -f actions-runner.${OS_IMAGE}.dockerfile \
+	  -t "${DEFAULT_RUNNER_NAME}:${OS_IMAGE}" \
+	  .
+
+push:
+	${DOCKER} push "${DEFAULT_RUNNER_NAME}:${OS_IMAGE}"

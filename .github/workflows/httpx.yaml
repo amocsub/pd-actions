@@ -1,0 +1,79 @@
+name: "httpx"
+
+on:
+  workflow_dispatch:
+    inputs:
+      input_filename:
+        description: "File name with all the subdomains with ports to scan"
+        default: "output/active-ports.txt"
+      output_filename:
+        description: "Where to put the results"
+        default: "output/active-urls.txt"
+      amount_of_workers:
+        description: "How many workers should be used, max 256 per matrix"
+        default: "5"
+      threads_per_worker:
+        description: "How many threads per worker should be used"
+        default: "25"
+      user_agent:
+        description: "User-Agent to use in the calls"
+        default: "User-Agent: Mozilla/5.0 (compatible; PlatSec)"
+  # schedule:
+  # # * is a special character in YAML so you have to quote this string
+  # - cron:  '30 5,17 * * *'
+
+jobs:
+  split:
+    runs-on: pd-actions
+    outputs:
+      splited_files: ${{ steps.split.outputs.splited_files }}
+    steps:
+    - uses: actions/checkout@v3
+    - id: split
+      run: |
+        mkdir -p workspace/split && rm -rf workspace/split/*
+        lines_per_file=$((($(wc -l < "${{ github.event.inputs.input_filename }}") + ${{ github.event.inputs.amount_of_workers }} - 1) / ${{ github.event.inputs.amount_of_workers }}))
+        split -l ${lines_per_file} "${{ github.event.inputs.input_filename }}" workspace/split/
+        files_array=$(find workspace/split/* -printf "%f\n" | jq -R -s -c 'split("\n")[:-1]')
+        echo "splited_files=${files_array}" >> $GITHUB_OUTPUT
+        gcloud storage cp workspace/split/* gs://pd-actions-bucket/runs/${{ github.run_id }}/split/
+
+  httpx:
+    needs: split
+    runs-on: pd-actions
+    strategy:
+      fail-fast: false
+      matrix:
+        file: ${{ fromJson(needs.split.outputs.splited_files) }}
+    steps:
+    - uses: actions/checkout@v3
+    - run: |
+        gcloud storage cp gs://pd-actions-bucket/runs/${{ github.run_id }}/split/${{ matrix.file }} workspace/active-ports-to-scan.txt
+        httpx -l workspace/active-ports-to-scan.txt -t ${{ github.event.inputs.threads_per_worker }} -o workspace/httpx-output-${{ matrix.file }} -random-agent false -H '${{ github.event.inputs.user_agent }}'
+        gcloud storage cp workspace/httpx-output-* gs://pd-actions-bucket/runs/${{ github.run_id }}/httpx/  
+
+  merge_save:
+    needs: httpx
+    runs-on: pd-actions
+    if: ${{ always() && contains(needs.*.result, 'success') }}
+    steps:
+    - uses: actions/checkout@v3
+    - run: |
+        gcloud storage cp "gs://pd-actions-bucket/runs/${{ github.run_id }}/httpx/*" workspace/
+        cat workspace/httpx-output-* | anew ${{ github.event.inputs.output_filename }} > workspace/new-active-urls.txt
+        git add ${{ github.event.inputs.output_filename }}
+        git config --local user.email "matias.busco@king.com"
+        git config --global user.name "matias.busco"
+        git commit -m "${{ github.workflow }} - Run ${{ github.run_id }}" -a --allow-empty
+        git push -f
+
+  alert:
+    needs: [split, httpx, merge_save]
+    runs-on: pd-actions
+    if: ${{ always() && contains(needs.*.result, 'failure') }}
+    steps:
+    - run: |
+        curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+          -H "Content-type: application/json" \
+          -d '{ "text": "Github Actions Workflow ${{ github.workflow }} status failure - <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Link>" }'
+      

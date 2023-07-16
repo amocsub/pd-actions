@@ -1,0 +1,4 @@
+slack:
+  - id: "slack"
+    slack_format: "{{data}}"
+    slack_webhook_url: ""

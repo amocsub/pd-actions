@@ -1,0 +1,42 @@
+name: "test-greeting"
+
+on:
+  workflow_dispatch:
+    inputs:
+      greet:
+        description: "What should we say?"
+        default: "Hello World!"
+
+jobs:
+  test1:
+    runs-on: builder
+    steps:
+    - run: echo ${{ github.event.inputs.greet }}
+
+  test2:
+    runs-on: builder
+    needs: test1
+    steps:
+    - run: echo ${{ github.event.inputs.greet }}
+
+  test3:
+    runs-on: builder
+    needs: test1
+    steps:
+      - run: echo ${{ github.event.inputs.greet }}
+
+  test4:
+    runs-on: builder
+    needs: test2
+    strategy:
+      fail-fast: false
+      matrix:
+        greet: [one, two, three]
+    steps:
+      - run: echo "${{ matrix.greet }} - ${{ github.event.inputs.greet }}"
+
+  test5:
+    runs-on: builder
+    needs: [test4, test3]
+    steps:
+      - run: echo ${{ github.event.inputs.greet }}

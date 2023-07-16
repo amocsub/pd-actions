@@ -1,0 +1,19 @@
+id: cloudflare-network-error-logging-detect
+
+info:
+  name: Cloudflare NEL Detect
+  author: amocsub
+  severity: info
+  reference: 
+    - https://developers.cloudflare.com/support/network/understanding-network-error-logging/
+  tags: cloudflare,nel
+
+requests:
+  - method: GET
+    path:
+      - "{{BaseURL}}"
+
+    matchers:
+      - type: dsl
+        dsl:
+          - "contains(all_headers, 'a.nel.cloudflare.com')"

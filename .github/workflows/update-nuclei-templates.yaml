@@ -1,0 +1,23 @@
+name: Update Nuclei Templates
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  update-nuclei-templates:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Update templates
+        run: git submodule update --remote --merge
+
+      - run: |
+          git add config/nuclei/nuclei-templates/
+          git config --local user.email "18237644+amocsub@users.noreply.github.com "
+          git config --global user.name "amocsub"
+          git diff-index --quiet HEAD || git commit -m "${{ github.workflow }} - Run ${{ github.run_id }}" --allow-empty
+          git push -f

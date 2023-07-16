@@ -1,6 +1,6 @@
 terraform {
   backend "gcs" {
-    bucket = "pd-actions-terraform-state"
+    bucket = "terraform-state-pd-actions-dev"
     prefix = "arc"
   }
 }
