@@ -46,11 +46,13 @@ jobs:
         file: ${{ fromJson(needs.split.outputs.splited_files) }}
     steps:
     - uses: actions/checkout@v3
-    - run: gcloud storage cp gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/split/${{ matrix.file }} workspace/subfinder-input
-    - run: mkdir -p /home/runner/.config/subfinder
-    - run: cp -r ${{ github.event.inputs.config_folder || 'config/subfinder/general/*' }} /home/runner/.config/subfinder
-    - run: subfinder
-    - run: gcloud storage cp workspace/subfinder-output gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/subfinder/subfinder-output-${{ matrix.file }}
+    - name: Run subfinder
+      run: |
+        gcloud storage cp gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/split/${{ matrix.file }} workspace/subfinder-input
+        mkdir -p /home/runner/.config/subfinder
+        cp -r ${{ github.event.inputs.config_folder || 'config/subfinder/general/*' }} /home/runner/.config/subfinder/
+        subfinder
+        gcloud storage cp workspace/subfinder-output gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/subfinder/subfinder-output-${{ matrix.file }}
 
   merge_save:
     needs: subfinder
