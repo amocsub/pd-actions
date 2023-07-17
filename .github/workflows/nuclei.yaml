@@ -55,6 +55,7 @@ jobs:
         cp -r ${{ github.event.inputs.config_folder || 'config/nuclei/general/*' }} /home/runner/.config/nuclei
         ln -s  /runner/_work/pd-actions/pd-actions/config/nuclei/custom-nuclei-templates /runner/_work/pd-actions/pd-actions/config/nuclei/nuclei-templates/custom-nuclei-templates
         ln -s /runner/_work/pd-actions/pd-actions/config/nuclei/nuclei-templates /home/runner/nuclei-templates
+        sleep 99999999
         nuclei
         gcloud storage cp workspace/nuclei-output gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/nuclei/nuclei-output-${{ matrix.file }}
       
