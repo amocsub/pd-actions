@@ -52,10 +52,17 @@ jobs:
     if: ${{ always() && contains(needs.*.result, 'success') }}
     steps:
     - uses: actions/checkout@v3
-    - run: |
+    - name: Download & Merge
+      run: |
         gcloud storage cp "gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/subfinder/*" workspace/
-        cat workspace/subfinder-output-* | anew ${{ github.event.inputs.output_filename || 'output/subfinder-output' }} > workspace/new-domains.txt
-        git add ${{ github.event.inputs.output_filename || 'output/subfinder-output' }}
+        jq -scr 'unique[]' workspace/subfinder-output-* | anew ${{ github.event.inputs.output_filename || 'output/subfinder-output' }} > news/subfinder-news
+        cat workspace/subfinder-output-* 
+    - name: Prepare Next
+      run: |
+        jq -scr '.[] | try .host' output/subfinder-output > input/dnsx-input
+    - name: Save Results
+      run: |
+        git add input/* output/* news/*
         git config --local user.email "${{ secrets.GLOBAL_GITHUB_EMAIL }}"
         git config --global user.name "${{ secrets.GLOBAL_GITHUB_USER }}"
         git commit -m "${{ github.workflow }} - Run ${{ github.run_id }}" -a --allow-empty
