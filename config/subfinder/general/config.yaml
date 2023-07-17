@@ -73,7 +73,7 @@ collect-sources: true
 #ip: false
 
 # provider config file
-provider-config: config/subfinder/provider.yaml
+#provider-config:
 
 # comma separated list of resolvers to use
 #r: []

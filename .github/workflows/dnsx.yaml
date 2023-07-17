@@ -4,20 +4,20 @@ on:
   workflow_dispatch:
     inputs:
       input_filename:
-        description: "File name with all the subdomains to scan"
         default: "input/dnx-input"
+        description: "File name with all the subdomains to scan"
       output_filename:
-        description: "Where to put the results"
         default: "output/dnsx-output"
+        description: "Where to put the results"
       amount_of_workers:
-        description: "How many workers should be used, max 256 per matrix"
         default: "1"
-      threads_per_worker:
-        description: "How many threads per worker should be used"
-        default: "100"
+        description: "How many workers should be used, max 256 per matrix"
+      config_folder:
+        default: "config/dnsx/general/*"
+        description: Folder containing dnsx configurations files
   # schedule:
   # # * is a special character in YAML so you have to quote this string
-  # - cron:  '30 5,17 * * *'
+  # - cron:  '0 0 * * *'
 
 jobs:
   
@@ -27,11 +27,12 @@ jobs:
       splited_files: ${{ steps.split.outputs.splited_files }}
     steps:
     - uses: actions/checkout@v3
-    - id: split
+    - name: Split files
+      id: split
       run: |
         mkdir -p workspace/split && rm -rf workspace/split/*
-        lines_per_file=$((($(wc -l < "${{ github.event.inputs.input_filename }}") + ${{ github.event.inputs.amount_of_workers }} - 1) / ${{ github.event.inputs.amount_of_workers }}))
-        split -l ${lines_per_file} "${{ github.event.inputs.input_filename }}" workspace/split/
+        lines_per_file=$((($(wc -l < "${{ github.event.inputs.input_filename || 'input/dnx-input' }}") + ${{ github.event.inputs.amount_of_workers || '1' }} - 1) / ${{ github.event.inputs.amount_of_workers || '1' }}))
+        split -l ${lines_per_file} "${{ github.event.inputs.input_filename || 'input/dnx-input' }}" workspace/split/
         files_array=$(find workspace/split/* -printf "%f\n" | jq -R -s -c 'split("\n")[:-1]')
         echo "splited_files=${files_array}" >> $GITHUB_OUTPUT
         gcloud storage cp workspace/split/* gs://pd-actions-bucket/runs/${{ github.run_id }}/split/
@@ -47,8 +48,10 @@ jobs:
     - uses: actions/checkout@v3
     - run: |
         gcloud storage cp gs://pd-actions-bucket/runs/${{ github.run_id }}/split/${{ matrix.file }} workspace/subdomains-to-scan.txt
-        dnsx -l workspace/subdomains-to-scan.txt -o workspace/dnsx-output-${{ matrix.file }} -t ${{ github.event.inputs.threads_per_worker }}
-        gcloud storage cp workspace/dnsx-output-* gs://pd-actions-bucket/runs/${{ github.run_id }}/dnsx/
+        mkdir -p /home/runner/.config/dnsx
+        cp -r ${{ github.event.inputs.config_folder || 'config/dnsx/general/*' }} /home/runner/.config/dnsx
+        dnsx
+        gcloud storage cp workspace/dnsx-output gs://pd-actions-bucket/runs/${{ github.run_id }}/dnsx/dnsx-output-${{ matrix.file }}
 
   merge_save:
     needs: dnsx
@@ -56,11 +59,16 @@ jobs:
     if: ${{ always() && contains(needs.*.result, 'success') }}
     steps:
     - uses: actions/checkout@v3
-    - name: merge and save results
+    - name: Download & Merge
       run: |
         gcloud storage cp "gs://pd-actions-bucket/runs/${{ github.run_id }}/dnsx/*" workspace/
-        cat workspace/dnsx-output-* | anew ${{ github.event.inputs.output_filename }} > workspace/new-active-subdomains.txt
-        git add ${{ github.event.inputs.output_filename }}
+        jq -scr 'unique[]' workspace/dnsx-output-* | anew ${{ github.event.inputs.output_filename || 'output/dnsx-output' }} > news/dnsx-news
+    - name: Prepare Next
+      run: |
+        jq -scr '.[] | try .host, try .a[]' ${{ github.event.inputs.output_filename || 'output/dnsx-output' }} > input/naabu-input
+    - name: Save Results
+      run: |
+        git add input/* output/* news/*
         git config --local user.email "${{ secrets.GLOBAL_GITHUB_EMAIL }}"
         git config --global user.name "${{ secrets.GLOBAL_GITHUB_USER }}"
         git commit -m "${{ github.workflow }} - Run ${{ github.run_id }}" -a --allow-empty

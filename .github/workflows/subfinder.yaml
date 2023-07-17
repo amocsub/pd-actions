@@ -64,7 +64,6 @@ jobs:
       run: |
         gcloud storage cp "gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/subfinder/*" workspace/
         jq -scr 'unique[]' workspace/subfinder-output-* | anew ${{ github.event.inputs.output_filename || 'output/subfinder-output' }} > news/subfinder-news
-        cat workspace/subfinder-output-* 
     - name: Prepare Next
       run: |
         jq -scr '.[] | try .host' output/subfinder-output > input/dnsx-input
