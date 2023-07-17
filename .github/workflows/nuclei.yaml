@@ -76,7 +76,7 @@ jobs:
   alert:
     needs: [split, nuclei, merge_save]
     runs-on: pd-actions
-    if: ${{ always() && !contains(needs.*.result, 'success') }}
+    if: ${{ always() && contains(needs.*.result, 'failure') }}
     steps:
     - run: |
         curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
