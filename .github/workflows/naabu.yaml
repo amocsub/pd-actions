@@ -36,7 +36,7 @@ jobs:
         split -l ${lines_per_file} "${{ github.event.inputs.input_filename }}" workspace/split/
         files_array=$(find workspace/split/* -printf "%f\n" | jq -R -s -c 'split("\n")[:-1]')
         echo "splited_files=${files_array}" >> $GITHUB_OUTPUT
-        gcloud storage cp workspace/split/* gs://pd-actions-bucket/runs/${{ github.run_id }}/split/
+        gcloud storage cp workspace/split/* gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/split/
 
   naabu:
     needs: split
@@ -48,9 +48,9 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - run: |
-        gcloud storage cp gs://pd-actions-bucket/runs/${{ github.run_id }}/split/${{ matrix.file }} workspace/active-subdomains-to-scan.txt
+        gcloud storage cp gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/split/${{ matrix.file }} workspace/active-subdomains-to-scan.txt
         naabu -l workspace/active-subdomains-to-scan.txt -port ${{ github.event.inputs.ports_to_scan }} -c ${{ github.event.inputs.threads_per_worker }} -o workspace/naabu-output-${{ matrix.file }}
-        gcloud storage cp workspace/naabu-output-* gs://pd-actions-bucket/runs/${{ github.run_id }}/naabu/  
+        gcloud storage cp workspace/naabu-output-* gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/naabu/  
 
   merge_save:
     needs: naabu
@@ -59,7 +59,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - run: |
-        gcloud storage cp "gs://pd-actions-bucket/runs/${{ github.run_id }}/naabu/*" workspace/
+        gcloud storage cp "gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/naabu/*" workspace/
         cat workspace/naabu-output-* | anew ${{ github.event.inputs.output_filename }} > workspace/new-active-ports.txt
         git add ${{ github.event.inputs.output_filename }}
         git config --local user.email "${{ secrets.GLOBAL_GITHUB_EMAIL }}"

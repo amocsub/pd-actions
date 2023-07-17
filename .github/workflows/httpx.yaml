@@ -36,7 +36,7 @@ jobs:
         split -l ${lines_per_file} "${{ github.event.inputs.input_filename }}" workspace/split/
         files_array=$(find workspace/split/* -printf "%f\n" | jq -R -s -c 'split("\n")[:-1]')
         echo "splited_files=${files_array}" >> $GITHUB_OUTPUT
-        gcloud storage cp workspace/split/* gs://pd-actions-bucket/runs/${{ github.run_id }}/split/
+        gcloud storage cp workspace/split/* gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/split/
 
   httpx:
     needs: split
@@ -48,9 +48,9 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - run: |
-        gcloud storage cp gs://pd-actions-bucket/runs/${{ github.run_id }}/split/${{ matrix.file }} workspace/active-ports-to-scan.txt
+        gcloud storage cp gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/split/${{ matrix.file }} workspace/active-ports-to-scan.txt
         httpx -l workspace/active-ports-to-scan.txt -t ${{ github.event.inputs.threads_per_worker }} -o workspace/httpx-output-${{ matrix.file }} -random-agent false -H '${{ github.event.inputs.user_agent }}'
-        gcloud storage cp workspace/httpx-output-* gs://pd-actions-bucket/runs/${{ github.run_id }}/httpx/  
+        gcloud storage cp workspace/httpx-output-* gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/httpx/  
 
   merge_save:
     needs: httpx
@@ -59,7 +59,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - run: |
-        gcloud storage cp "gs://pd-actions-bucket/runs/${{ github.run_id }}/httpx/*" workspace/
+        gcloud storage cp "gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/httpx/*" workspace/
         cat workspace/httpx-output-* | anew ${{ github.event.inputs.output_filename }} > workspace/new-active-urls.txt
         git add ${{ github.event.inputs.output_filename }}
         git config --local user.email "${{ secrets.GLOBAL_GITHUB_EMAIL }}"

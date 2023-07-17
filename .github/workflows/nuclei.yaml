@@ -33,7 +33,7 @@ jobs:
         split -l ${lines_per_file} "${{ github.event.inputs.input_filename || 'output/active-urls.txt' }}" workspace/split/
         files_array=$(find workspace/split/* -printf "%f\n" | jq -R -s -c 'split("\n")[:-1]')
         echo "splited_files=${files_array}" >> $GITHUB_OUTPUT
-        gcloud storage cp workspace/split/* gs://pd-actions-bucket/runs/${{ github.run_id }}/split/
+        gcloud storage cp workspace/split/* gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/split/
 
   nuclei:
     needs: split
@@ -46,9 +46,9 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - run: |
-        gcloud storage cp gs://pd-actions-bucket/runs/${{ github.run_id }}/split/${{ matrix.file }} workspace/active-urls-to-scan.txt
+        gcloud storage cp gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/split/${{ matrix.file }} workspace/active-urls-to-scan.txt
         nuclei -config ${{ github.event.inputs.nuclei_config || 'config/nuclei/general.yaml'}}
-        gcloud storage cp workspace/nuclei-output gs://pd-actions-bucket/runs/${{ github.run_id }}/nuclei/nuclei-output-${{ matrix.file }}
+        gcloud storage cp workspace/nuclei-output gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/nuclei/nuclei-output-${{ matrix.file }}
       
   merge_save:
     needs: nuclei
@@ -57,7 +57,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - run: |
-        gcloud storage cp "gs://pd-actions-bucket/runs/${{ github.run_id }}/nuclei/*" workspace/
+        gcloud storage cp "gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/nuclei/*" workspace/
         cat workspace/nuclei-output-* | anew ${{ github.event.inputs.output_filename || 'output/nuclei-output.txt' }} > workspace/new-nuclei-output.txt
         git add ${{ github.event.inputs.output_filename || 'output/nuclei-output.txt' }}
         git config --local user.email "${{ secrets.GLOBAL_GITHUB_EMAIL }}"
