@@ -12,9 +12,9 @@ on:
       amount_of_workers:
         default: "5"
         description: "How many workers should be used, max 256 per matrix"
-      config_file:
-        default: "config/subfinder/general.yaml"
-        description: "File containing subfinder configurations"
+      config_folder:
+        default: "config/subfinder/general/*"
+        description: "Folder containing subfinder configurations files"
   # schedule:
     # # * is a special character in YAML so you have to quote this string
     # - cron:  '0 0 * * *'
@@ -49,7 +49,9 @@ jobs:
     - name: Run Subfinder
       run: |
         gcloud storage cp gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/split/${{ matrix.file }} workspace/domains-to-scan.txt
-        subfinder -config ${{ github.event.inputs.config_file || 'config/subfinder/general.yaml' }}
+        mkdir -p /home/runner/.config/subfinder
+        cp -r ${{ github.event.inputs.config_folder || 'config/subfinder/general/*' }} /home/runner/.config/subfinder
+        subfinder
         gcloud storage cp workspace/subfinder-output gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/subfinder/subfinder-output-${{ matrix.file }}
 
   merge_save:
