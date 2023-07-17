@@ -27,7 +27,8 @@ jobs:
       splited_files: ${{ steps.split.outputs.splited_files }}
     steps:
     - uses: actions/checkout@v3
-    - id: split
+    - name: Split files
+      id: split
       run: |
         mkdir -p workspace/split && rm -rf workspace/split/*
         lines_per_file=$((($(wc -l < "${{ github.event.inputs.input_filename || 'input/subfinder-input' }}") + ${{ github.event.inputs.amount_of_workers || '5' }} - 1) / ${{ github.event.inputs.amount_of_workers || '5' }}))
@@ -45,7 +46,8 @@ jobs:
         file: ${{ fromJson(needs.split.outputs.splited_files) }}
     steps:
     - uses: actions/checkout@v3
-    - run: |
+    - name: Run Subfinder
+      run: |
         gcloud storage cp gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/split/${{ matrix.file }} workspace/domains-to-scan.txt
         subfinder -config ${{ github.event.inputs.config_file || 'config/subfinder/general.yaml' }}
         gcloud storage cp workspace/subfinder-output gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/subfinder/subfinder-output-${{ matrix.file }}
@@ -77,7 +79,8 @@ jobs:
     runs-on: pd-actions
     if: ${{ always() && contains(needs.*.result, 'failure') }}
     steps:
-    - run: |
+    - name: Alert
+      run: |
         curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
           -H "Content-type: application/json" \
           -d '{ "text": "Github Actions Workflow ${{ github.workflow }} status failure - <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Link>" }'
