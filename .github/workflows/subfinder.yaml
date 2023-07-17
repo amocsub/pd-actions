@@ -4,12 +4,16 @@ on:
   workflow_dispatch:
     inputs:
       input_filename:
+        default: "input/subfinder-input"
         description: "File name with all the apex domains to scan"
       output_filename:
+        default: "output/subfinder-output"
         description: "Where to put the results"
       amount_of_workers:
+        default: "5"
         description: "How many workers should be used, max 256 per matrix"
       config_file:
+        default: "config/subfinder/general.yaml"
         description: "File containing subfinder configurations"
   # schedule:
     # # * is a special character in YAML so you have to quote this string
