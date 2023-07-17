@@ -66,7 +66,7 @@ jobs:
         jq -scr 'unique[]' workspace/dnsx-output-* | anew ${{ github.event.inputs.output_filename || 'output/dnsx-output' }} > news/dnsx-news
     - name: Prepare Next
       run: |
-        jq -scr '.[] | try .host, try .a[]' ${{ github.event.inputs.output_filename || 'output/dnsx-output' }} > input/naabu-input
+        jq -scr '.[] | try .host' ${{ github.event.inputs.output_filename || 'output/dnsx-output' }} > input/naabu-input
     - name: Save Results
       run: |
         git add input/* output/* news/*

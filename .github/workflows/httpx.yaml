@@ -5,19 +5,16 @@ on:
     inputs:
       input_filename:
         description: "File name with all the subdomains with ports to scan"
-        default: "output/active-ports.txt"
+        default: "input/httpx-input"
       output_filename:
         description: "Where to put the results"
-        default: "output/active-urls.txt"
+        default: "output/httpx-output"
       amount_of_workers:
         description: "How many workers should be used, max 256 per matrix"
         default: "5"
-      threads_per_worker:
-        description: "How many threads per worker should be used"
-        default: "25"
-      user_agent:
-        description: "User-Agent to use in the calls"
-        default: "User-Agent: Mozilla/5.0 (compatible; PlatSec)"
+      config_folder:
+        default: "config/httpx/general/*"
+        description: "Folder containing httpx configurations files"
   # schedule:
   # # * is a special character in YAML so you have to quote this string
   # - cron:  '30 5,17 * * *'
@@ -29,11 +26,12 @@ jobs:
       splited_files: ${{ steps.split.outputs.splited_files }}
     steps:
     - uses: actions/checkout@v3
-    - id: split
+    - name: Split files
+      id: split
       run: |
         mkdir -p workspace/split && rm -rf workspace/split/*
-        lines_per_file=$((($(wc -l < "${{ github.event.inputs.input_filename }}") + ${{ github.event.inputs.amount_of_workers }} - 1) / ${{ github.event.inputs.amount_of_workers }}))
-        split -l ${lines_per_file} "${{ github.event.inputs.input_filename }}" workspace/split/
+        lines_per_file=$((($(wc -l < "${{ github.event.inputs.input_filename || 'input/httpx-input' }}") + ${{ github.event.inputs.amount_of_workers || '5' }} - 1) / ${{ github.event.inputs.amount_of_workers || '5' }}))
+        split -l ${lines_per_file} "${{ github.event.inputs.input_filename || 'input/httpx-input' }}" workspace/split/
         files_array=$(find workspace/split/* -printf "%f\n" | jq -R -s -c 'split("\n")[:-1]')
         echo "splited_files=${files_array}" >> $GITHUB_OUTPUT
         gcloud storage cp workspace/split/* gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/split/
@@ -47,10 +45,13 @@ jobs:
         file: ${{ fromJson(needs.split.outputs.splited_files) }}
     steps:
     - uses: actions/checkout@v3
-    - run: |
-        gcloud storage cp gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/split/${{ matrix.file }} workspace/active-ports-to-scan.txt
-        httpx -l workspace/active-ports-to-scan.txt -t ${{ github.event.inputs.threads_per_worker }} -o workspace/httpx-output-${{ matrix.file }} -random-agent false -H '${{ github.event.inputs.user_agent }}'
-        gcloud storage cp workspace/httpx-output-* gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/httpx/  
+    - name: Run httpx
+      run: |
+        gcloud storage cp gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/split/${{ matrix.file }} workspace/httpx-input
+        mkdir -p /home/runner/.config/httpx
+        cp -r ${{ github.event.inputs.config_folder || 'config/httpx/general/*' }} /home/runner/.config/httpx
+        httpx
+        gcloud storage cp workspace/httpx-output gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/httpx/httpx-output-${{ matrix.file }}
 
   merge_save:
     needs: httpx
@@ -58,10 +59,16 @@ jobs:
     if: ${{ always() && contains(needs.*.result, 'success') }}
     steps:
     - uses: actions/checkout@v3
-    - run: |
+    - name: Download & Merge
+      run: |
         gcloud storage cp "gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/httpx/*" workspace/
-        cat workspace/httpx-output-* | anew ${{ github.event.inputs.output_filename }} > workspace/new-active-urls.txt
-        git add ${{ github.event.inputs.output_filename }}
+        jq -scr 'unique[]' workspace/httpx-output-* | anew ${{ github.event.inputs.output_filename || 'output/httpx-output' }} > news/httpx-news
+    - name: Prepare Next
+      run: |
+        jq -scr 'map({(.url):1})|add|keys_unsorted | .[]' output/httpx-output > input/nuclei-input
+    - name: Save Results
+      run: |
+        git add input/* output/* news/*
         git config --local user.email "${{ secrets.GLOBAL_GITHUB_EMAIL }}"
         git config --global user.name "${{ secrets.GLOBAL_GITHUB_USER }}"
         git commit -m "${{ github.workflow }} - Run ${{ github.run_id }}" -a --allow-empty
