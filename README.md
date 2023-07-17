@@ -1,4 +1,4 @@
-## CyberSecurity Github Actons Workflow
+## CyberSecurity Github Actions Workflow
 
 ## 🛠 Setup
 
