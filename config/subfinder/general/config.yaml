@@ -8,7 +8,7 @@
 #domain: []
 
 # file containing list of domains for subdomain discovery
-list: workspace/domains-to-scan.txt
+list: workspace/subfinder-input
 
 # specific sources to use for discovery (-s crtsh,github). use -ls to display all available sources.
 # sources:

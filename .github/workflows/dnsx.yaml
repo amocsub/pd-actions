@@ -46,8 +46,9 @@ jobs:
         file: ${{ fromJson(needs.split.outputs.splited_files) }}
     steps:
     - uses: actions/checkout@v3
-    - run: |
-        gcloud storage cp gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/split/${{ matrix.file }} workspace/subdomains-to-scan.txt
+    - name: Run dnsX
+      run: |
+        gcloud storage cp gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/split/${{ matrix.file }} workspace/dnsx-input
         mkdir -p /home/runner/.config/dnsx
         cp -r ${{ github.event.inputs.config_folder || 'config/dnsx/general/*' }} /home/runner/.config/dnsx
         dnsx

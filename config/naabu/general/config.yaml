@@ -5,7 +5,7 @@
 #host: []
 
 # list of hosts to scan ports (file)
-l: input/naabu-input
+l: workspace/naabu-input
 
 # hosts to exclude from the scan (comma-separated)
 #eh: 
@@ -47,7 +47,7 @@ update: false
 disable-update-check: true
 
 # file to write output to (optional)
-output: output/naabu-output
+output: workspace/naabu-output
 
 # write output in json lines format
 json: true

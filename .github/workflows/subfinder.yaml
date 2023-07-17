@@ -48,7 +48,7 @@ jobs:
     - uses: actions/checkout@v3
     - name: Run Subfinder
       run: |
-        gcloud storage cp gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/split/${{ matrix.file }} workspace/domains-to-scan.txt
+        gcloud storage cp gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/split/${{ matrix.file }} workspace/subfinder-input
         mkdir -p /home/runner/.config/subfinder
         cp -r ${{ github.event.inputs.config_folder || 'config/subfinder/general/*' }} /home/runner/.config/subfinder
         subfinder
