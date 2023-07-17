@@ -4,20 +4,20 @@ on:
   workflow_dispatch:
     inputs:
       input_filename:
+        default: "input/nuclei-input"
         description: "File name with all the urls to scan"
-        #default: "output/active-urls.txt"
       output_filename:
+        default: "output/nuclei-output"
         description: "Where to put the results"
-        #default: "output/nuclei-output.txt"
       amount_of_workers:
+        default: "5"
         description: "How many workers should be used, max 256 per matrix"
-        #default: "5"
-      nuclei_config:
-        description: "Nuclei configfile"
-        #default: "config/nuclei/general.yaml"
+      config_folder:
+        default: "config/nuclei/general.yaml"
+        description: "Folder containing httpx configurations files"
   # schedule:
   #   # * is a special character in YAML so you have to quote this string
-  #   - cron:  '30 5,17 * * *'
+  #   - cron:  '0 0 * * *'
 
 jobs:
   split:
@@ -26,11 +26,12 @@ jobs:
       splited_files: ${{ steps.split.outputs.splited_files }}
     steps:
     - uses: actions/checkout@v3
-    - id: split
+    - name: Split files
+      id: split
       run: |
         mkdir -p workspace/split && rm -rf workspace/split/*
-        lines_per_file=$((($(wc -l < "${{ github.event.inputs.input_filename || 'output/active-urls.txt' }}") + ${{ github.event.inputs.amount_of_workers || '5'}} - 1) / ${{ github.event.inputs.amount_of_workers || '5'}}))
-        split -l ${lines_per_file} "${{ github.event.inputs.input_filename || 'output/active-urls.txt' }}" workspace/split/
+        lines_per_file=$((($(wc -l < "${{ github.event.inputs.input_filename || 'input/nuclei-input' }}") + ${{ github.event.inputs.amount_of_workers || '5'}} - 1) / ${{ github.event.inputs.amount_of_workers || '5'}}))
+        split -l ${lines_per_file} "${{ github.event.inputs.input_filename || 'input/nuclei-input' }}" workspace/split/
         files_array=$(find workspace/split/* -printf "%f\n" | jq -R -s -c 'split("\n")[:-1]')
         echo "splited_files=${files_array}" >> $GITHUB_OUTPUT
         gcloud storage cp workspace/split/* gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/split/
@@ -45,9 +46,12 @@ jobs:
         file: ${{ fromJson(needs.split.outputs.splited_files) }}
     steps:
     - uses: actions/checkout@v3
-    - run: |
+    - name: Run nuclei
+      run: |
         gcloud storage cp gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/split/${{ matrix.file }} workspace/active-urls-to-scan.txt
-        nuclei -config ${{ github.event.inputs.nuclei_config || 'config/nuclei/general.yaml'}}
+        mkdir -p /home/runner/.config/nuclei
+        cp -r ${{ github.event.inputs.config_folder || 'config/nuclei/general/*' }} /home/runner/.config/nuclei
+        nuclei
         gcloud storage cp workspace/nuclei-output gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/nuclei/nuclei-output-${{ matrix.file }}
       
   merge_save:
@@ -56,10 +60,14 @@ jobs:
     if: ${{ always() && contains(needs.*.result, 'success') }}
     steps:
     - uses: actions/checkout@v3
-    - run: |
+    - name: Download & Merge
+      run: |
         gcloud storage cp "gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/nuclei/*" workspace/
+        jq -scr 'unique[]' workspace/nuclei-output-* | anew ${{ github.event.inputs.output_filename || 'output/nuclei-output' }} > news/nuclei-news
         cat workspace/nuclei-output-* | anew ${{ github.event.inputs.output_filename || 'output/nuclei-output.txt' }} > workspace/new-nuclei-output.txt
-        git add ${{ github.event.inputs.output_filename || 'output/nuclei-output.txt' }}
+    - name: Save Results
+      run: |
+        git add output/* news/*
         git config --local user.email "${{ secrets.GLOBAL_GITHUB_EMAIL }}"
         git config --global user.name "${{ secrets.GLOBAL_GITHUB_USER }}"
         git commit -m "${{ github.workflow }} - Run ${{ github.run_id }}" -a --allow-empty

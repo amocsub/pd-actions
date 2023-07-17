@@ -17,7 +17,7 @@ on:
         description: "Folder containing httpx configurations files"
   # schedule:
   # # * is a special character in YAML so you have to quote this string
-  # - cron:  '30 5,17 * * *'
+  # - cron:  '0 0 * * *'
 
 jobs:
   split:
@@ -68,7 +68,7 @@ jobs:
         jq -scr 'map({(.url):1})|add|keys_unsorted | .[]' output/httpx-output > input/nuclei-input
     - name: Save Results
       run: |
-        git add input/* output/* news/*
+        git add output/* news/*
         git config --local user.email "${{ secrets.GLOBAL_GITHUB_EMAIL }}"
         git config --global user.name "${{ secrets.GLOBAL_GITHUB_USER }}"
         git commit -m "${{ github.workflow }} - Run ${{ github.run_id }}" -a --allow-empty
