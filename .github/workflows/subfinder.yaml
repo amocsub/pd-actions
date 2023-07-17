@@ -13,7 +13,7 @@ on:
         default: "5"
         description: "How many workers should be used, max 256 per matrix"
       config_folder:
-        default: "config/subfinder/general/*"
+        default: "config/subfinder/general"
         description: "Folder containing subfinder configurations files"
   # schedule:
     # # * is a special character in YAML so you have to quote this string
@@ -50,7 +50,7 @@ jobs:
       run: |
         gcloud storage cp gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/split/${{ matrix.file }} workspace/subfinder-input
         mkdir -p /home/runner/.config/subfinder
-        cp -r ${{ github.event.inputs.config_folder || 'config/subfinder/general/*' }} /home/runner/.config/subfinder
+        cp -r ${{ github.event.inputs.config_folder || 'config/subfinder/general' }} /home/runner/.config/subfinder
         subfinder
         gcloud storage cp workspace/subfinder-output gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/subfinder/subfinder-output-${{ matrix.file }}
 

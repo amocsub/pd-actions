@@ -13,7 +13,7 @@ on:
         description: "How many workers should be used, max 256 per matrix"
         default: "5"
       config_folder:
-        default: "config/naabu/general/*"
+        default: "config/naabu/general"
         description: "Folder containing naabu configurations files"
   # schedule:
   # # * is a special character in YAML so you have to quote this string
@@ -49,7 +49,7 @@ jobs:
       run: |
         gcloud storage cp gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/split/${{ matrix.file }} workspace/naabu-input
         mkdir -p /home/runner/.config/naabu
-        cp -r ${{ github.event.inputs.config_folder || 'config/naabu/general/*' }} /home/runner/.config/naabu
+        cp -r ${{ github.event.inputs.config_folder || 'config/naabu/general' }} /home/runner/.config/naabu
         naabu
         gcloud storage cp workspace/naabu-output gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/naabu/naabu-output-${{ matrix.file }}
 
