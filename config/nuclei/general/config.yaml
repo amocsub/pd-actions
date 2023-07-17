@@ -26,7 +26,7 @@ resume: false
 #automatic-scan: false
 
 # list of template or template directory to run (comma-separated, file)
-templates: ["config/nuclei/nuclei-templates", "config/nuclei/custom-nuclei-templates"]
+#templates: []
 
 # list of template urls to run (comma-separated, file)
 #template-url: []

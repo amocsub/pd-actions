@@ -51,6 +51,8 @@ jobs:
         gcloud storage cp gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/split/${{ matrix.file }} workspace/nuclei-input
         mkdir -p /home/runner/.config/nuclei
         cp -r ${{ github.event.inputs.config_folder || 'config/nuclei/general/*' }} /home/runner/.config/nuclei
+        ln -s config/nuclei/nuclei-templates /home/runner/nuclei-templates
+        ln -s config/nuclei/custom-nuclei-templates /home/runner/nuclei-templates/custom-nuclei-templates
         nuclei
         gcloud storage cp workspace/nuclei-output gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/nuclei/nuclei-output-${{ matrix.file }}
       
