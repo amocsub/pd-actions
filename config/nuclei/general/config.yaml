@@ -260,16 +260,16 @@ no-interactsh: true
 #uncover-delay: 1
 
 # maximum number of requests to send per second
-rate-limit: 150
+rate-limit: 1500
 
 # maximum number of requests to send per minute
 #rate-limit-minute: 0
 
 # maximum number of hosts to be analyzed in parallel per template
-bulk-size: 5
+bulk-size: 250
 
 # maximum number of templates to be executed in parallel
-concurrency: 25
+concurrency: 250
 
 # maximum number of headless hosts to be analyzed in parallel per template
 # headless-bulk-size: 10
