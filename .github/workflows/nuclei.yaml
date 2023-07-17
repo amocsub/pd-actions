@@ -46,13 +46,15 @@ jobs:
         file: ${{ fromJson(needs.split.outputs.splited_files) }}
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: 'true'
     - name: Run nuclei
       run: |
         gcloud storage cp gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/split/${{ matrix.file }} workspace/nuclei-input
         mkdir -p /home/runner/.config/nuclei
         cp -r ${{ github.event.inputs.config_folder || 'config/nuclei/general/*' }} /home/runner/.config/nuclei
-        cp -r config/nuclei/nuclei-templates /home/runner
-        cp -r config/nuclei/custom-nuclei-templates /home/runner/nuclei-templates
+        ln -s config/nuclei/custom-nuclei-templates config/nuclei/nuclei-templates/custom-nuclei-templates
+        ln -s config/nuclei/nuclei-templates /home/runner/nuclei-templates
         sleep 999999999
         nuclei
         gcloud storage cp workspace/nuclei-output gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/nuclei/nuclei-output-${{ matrix.file }}
