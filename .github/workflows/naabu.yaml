@@ -5,7 +5,7 @@ on:
     inputs:
       input_filename:
         description: "File name with all the subdomains to scan"
-        default: "output/naabu-input"
+        default: "input/naabu-input"
       output_filename:
         description: "Where to put the results"
         default: "output/naabu-output"
@@ -30,8 +30,8 @@ jobs:
       id: split
       run: |
         mkdir -p workspace/split && rm -rf workspace/split/*
-        lines_per_file=$((($(wc -l < "${{ github.event.inputs.input_filename || 'output/naabu-input' }}") + ${{ github.event.inputs.amount_of_workers || '5' }} - 1) / ${{ github.event.inputs.amount_of_workers || '5' }}))
-        split -l ${lines_per_file} "${{ github.event.inputs.input_filename || 'output/naabu-input' }}" workspace/split/
+        lines_per_file=$((($(wc -l < "${{ github.event.inputs.input_filename || 'input/naabu-input' }}") + ${{ github.event.inputs.amount_of_workers || '5' }} - 1) / ${{ github.event.inputs.amount_of_workers || '5' }}))
+        split -l ${lines_per_file} "${{ github.event.inputs.input_filename || 'input/naabu-input' }}" workspace/split/
         files_array=$(find workspace/split/* -printf "%f\n" | jq -R -s -c 'split("\n")[:-1]')
         echo "splited_files=${files_array}" >> $GITHUB_OUTPUT
         gcloud storage cp workspace/split/* gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/split/
