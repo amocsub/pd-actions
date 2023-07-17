@@ -35,7 +35,7 @@ jobs:
         split -l ${lines_per_file} "${{ github.event.inputs.input_filename || 'input/dnsx-input' }}" workspace/split/
         files_array=$(find workspace/split/* -printf "%f\n" | jq -R -s -c 'split("\n")[:-1]')
         echo "splited_files=${files_array}" >> $GITHUB_OUTPUT
-        gcloud storage cp workspace/split/* gs://pd-actions-bucket/runs/${{ github.run_id }}/split/
+        gcloud storage cp workspace/split/* gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/split/
   
   dnsx:
     needs: split
@@ -47,11 +47,11 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - run: |
-        gcloud storage cp gs://pd-actions-bucket/runs/${{ github.run_id }}/split/${{ matrix.file }} workspace/subdomains-to-scan.txt
+        gcloud storage cp gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/split/${{ matrix.file }} workspace/subdomains-to-scan.txt
         mkdir -p /home/runner/.config/dnsx
         cp -r ${{ github.event.inputs.config_folder || 'config/dnsx/general/*' }} /home/runner/.config/dnsx
         dnsx
-        gcloud storage cp workspace/dnsx-output gs://pd-actions-bucket/runs/${{ github.run_id }}/dnsx/dnsx-output-${{ matrix.file }}
+        gcloud storage cp workspace/dnsx-output gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/dnsx/dnsx-output-${{ matrix.file }}
 
   merge_save:
     needs: dnsx
@@ -61,7 +61,7 @@ jobs:
     - uses: actions/checkout@v3
     - name: Download & Merge
       run: |
-        gcloud storage cp "gs://pd-actions-bucket/runs/${{ github.run_id }}/dnsx/*" workspace/
+        gcloud storage cp "gs://pd-actions-bucket-dev/runs/${{ github.run_id }}/dnsx/*" workspace/
         jq -scr 'unique[]' workspace/dnsx-output-* | anew ${{ github.event.inputs.output_filename || 'output/dnsx-output' }} > news/dnsx-news
     - name: Prepare Next
       run: |
