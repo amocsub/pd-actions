@@ -74,7 +74,7 @@ jobs:
         git add output/* news/*
         git config --local user.email "${{ secrets.GLOBAL_GITHUB_EMAIL }}"
         git config --global user.name "${{ secrets.GLOBAL_GITHUB_USER }}"
-        git commit -m "${{ github.workflow }} - Run ${{ github.run_id }}" -a --allow-empty
+        git diff-index --quiet HEAD || git commit -m "${{ github.workflow }} - Run ${{ github.run_id }}" --allow-empty
         git push -f
 
   alert:
