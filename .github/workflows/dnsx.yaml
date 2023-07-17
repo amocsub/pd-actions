@@ -14,10 +14,10 @@ on:
         description: "How many workers should be used, max 256 per matrix"
       config_folder:
         default: "config/dnsx/general/*"
-        description: Folder containing dnsx configurations files
-  # schedule:
-  # # * is a special character in YAML so you have to quote this string
-  # - cron:  '0 0 * * *'
+        description: "Folder containing dnsx configurations files"
+  schedule:
+    # * is a special character in YAML so you have to quote this string
+    - cron:  '0 1 * * *' # UTC
 
 jobs:
   

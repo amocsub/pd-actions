@@ -80,7 +80,7 @@ resume: false
 #exclude-matchers: []
 
 # templates to run based on severity. possible values: info, low, medium, high, critical, unknown
-severity: high, critical
+severity: info, low, medium, high, critical, unknown
 
 # templates to exclude based on severity. possible values: info, low, medium, high, critical, unknown
 #exclude-severity: 

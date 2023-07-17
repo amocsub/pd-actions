@@ -15,9 +15,9 @@ on:
       config_folder:
         default: "config/subfinder/general/*"
         description: "Folder containing subfinder configurations files"
-  # schedule:
-    # # * is a special character in YAML so you have to quote this string
-    # - cron:  '0 0 * * *'
+  schedule:
+    # * is a special character in YAML so you have to quote this string
+    - cron:  '0 0 * * *' # UTC
 
 jobs:
   
