@@ -20,7 +20,7 @@ resource "google_service_account_iam_binding" "pd-actions-k8s-role-binding" {
   service_account_id = google_service_account.pd-actions-k8s-sa.name
   role               = "roles/iam.workloadIdentityUser"
   members = [
-    "serviceAccount:king-platform-security-ci.svc.id.goog[actions-runner-system/pd-actions-k8s-sa]",
+    "serviceAccount:${var.project}.id.goog[actions-runner-system/pd-actions-k8s-sa]",
   ]
   depends_on = [google_service_account.pd-actions-k8s-sa, google_iam_workload_identity_pool.pd-actions-wip]
 }
