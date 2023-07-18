@@ -15,9 +15,7 @@ on:
       config_folder:
         default: "config/dnsx/general/*"
         description: "Folder containing dnsx configurations files"
-  schedule:
-    # * is a special character in YAML so you have to quote this string
-    - cron:  '0 1 * * *' # UTC
+  schedule: [{"cron": "0 1 * * *"}]
 
 jobs:
   

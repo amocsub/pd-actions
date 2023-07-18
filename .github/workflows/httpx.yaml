@@ -15,9 +15,7 @@ on:
       config_folder:
         default: "config/httpx/general/*"
         description: "Folder containing httpx configurations files"
-  schedule:
-    # * is a special character in YAML so you have to quote this string
-    - cron:  '0 3 * * *' # UTC
+  schedule: [{"cron": "0 3 * * *"}]
 
 jobs:
   split:
